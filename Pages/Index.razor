@@ -1,0 +1,49 @@
+﻿@page "/"
+
+@using System.IO;
+@using Syncfusion.Blazor.Inputs;
+
+<div id="dropArea" style="height: auto; overflow: auto">
+    <SfUploader @ref="uploadObj" AutoUpload="true" AllowedExtensions=".png, .jpg, .jpeg" AllowMultiple="false">
+        <UploaderTemplates>
+            <Template>
+                @if (!string.IsNullOrEmpty(base64))
+                {
+                    <span class="wrapper">
+                        <img class="upload-image" alt="Image" src="@base64">
+                    </span>
+                    <div class="name file-name" title="@context.Name">@context.Name</div>
+                    <div class="file-size">@fileSize</div>
+                    <span class="e-icons e-file-remove-btn" id="removeIcon" title="Remove" @onclick="@onFileRemove"></span>
+                }
+            </Template>
+        </UploaderTemplates>
+        <UploaderEvents ValueChange="OnChange"></UploaderEvents>
+    </SfUploader>
+</div>
+
+@code {
+    private SfUploader uploadObj { get; set; }
+    private string base64 { get; set; }
+    private string fileSize { get; set; }
+    private async Task OnChange(UploadChangeEventArgs args)
+    {
+        base64 = string.Empty;
+        foreach (var file in args.Files)
+        {
+            byte[] bytes;
+            using (var memoryStream = new MemoryStream())
+            {
+                file.Stream.CopyTo(memoryStream);
+                bytes = file.Stream.ToArray();
+            }
+            base64 = "data:image/png;base64," + Convert.ToBase64String(bytes);
+            fileSize = await uploadObj.BytesToSize(file.FileInfo.Size);
+        }
+    }
+    private async Task onFileRemove()
+    {
+        await uploadObj.Remove();
+    }
+}
+
